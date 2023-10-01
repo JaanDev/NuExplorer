@@ -8,7 +8,8 @@
 #include "logger.hpp"
 
 Color intToColor(int col) {
-    return {(unsigned char)(col >> 24), (unsigned char)(col >> 16 & 0xFF), (unsigned char)(col >> 8 & 0xFF), (unsigned char)(col & 0xFF)};
+    return {(unsigned char)(col >> 24), (unsigned char)(col >> 16 & 0xFF), (unsigned char)(col >> 8 & 0xFF),
+            (unsigned char)(col & 0xFF)};
 }
 
 int main() {
@@ -47,7 +48,8 @@ int main() {
         if (IsKeyPressed(KEY_O)) {
             logD("open");
             const char* filterPatterns[] = {"*.gsc"};
-            auto name = tinyfd_openFileDialog("Select a scene file (tested on LLOTR only!)", nullptr, 1, filterPatterns, "Game scene files (.gsc)", false);
+            auto name = tinyfd_openFileDialog("Select a scene file (tested on LLOTR only!)", nullptr, 1, filterPatterns,
+                                              "Game scene files (.gsc)", false);
             if (name) {
                 sceneLoaded = true;
                 logD("Selected file {}", name);
