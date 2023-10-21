@@ -590,8 +590,6 @@ void Scene::loadTextures(BinReader& reader, int count) {
 
         reader.seek(startPos);
 
-        // load tex here
-
         auto data = std::make_unique<uint8_t[]>(dataLen);
         reader.read(data.get(), dataLen);
 
@@ -600,102 +598,6 @@ void Scene::loadTextures(BinReader& reader, int count) {
         if (skip)
             continue;
 
-        ////////////////
-
-        // dds::Image img;
-        // auto res = dds::readFile("C:\\Dev\\Cpp\\NuExplorer\\build\\tex24.dds", &img);
-        // if (res != dds::ReadResult::Success) {
-        //     logE("Failed to load a texture!!");
-        //     continue;
-        // }
-
-        // logD("{:08X}", img.data.size());
-
-        // Image rlImg;
-        // rlImg.width = img.width;
-        // rlImg.height = img.height;
-        // rlImg.mipmaps = img.numMips;
-        // switch (img.format) {
-        // case DXGI_FORMAT_BC1_UNORM:
-        //     rlImg.format = PIXELFORMAT_COMPRESSED_DXT1_RGB;
-        //     break;
-        // case DXGI_FORMAT_BC2_UNORM:
-        //     rlImg.format = PIXELFORMAT_COMPRESSED_DXT3_RGBA;
-        //     break;
-        // case DXGI_FORMAT_BC3_UNORM:
-        //     rlImg.format = PIXELFORMAT_COMPRESSED_DXT5_RGBA;
-        //     break;
-        // case DXGI_FORMAT_R32G32B32A32_FLOAT:
-        //     rlImg.format = PIXELFORMAT_UNCOMPRESSED_R32G32B32A32;
-        //     break;
-        // default:
-        //     logE("NOT HANDLED TETXURE FORMAT!!!!!!!!!");
-        //     logD("img fmt {}", (int)img.format);
-        //     break;
-        // }
-        // rlImg.data = RL_MALLOC(img.data.size() * sizeof(uint8_t));
-        // memcpy(rlImg.data, img.data.data(), img.data.size());
-
-        // auto rlTex = LoadTextureFromImage(rlImg);
-        // m_textures[i] = rlTex;
-
-        // UnloadImage(rlImg);
-
-        //////////////////
-
-        // auto fstr = std::ofstream(fmt::format("tex{}.dds", i), std::ios::binary | std::ios::out);
-        // fstr.write((const char*)data.get(), dataLen);
-        // fstr.close();
-
-        // logD("datalen {}", dataLen);
-
-        // std::stringstream texStream;
-        // texStream.write((char*)data.get(), dataLen);
-
-        // nv_dds::CDDSImage img;
-        // img.load(texStream);
-
-        // auto valid = img.is_valid();
-        // logD("img valid {} pixels 0x{:08X} compressed {}", valid, (uintptr_t)((uint8_t*)img), img.is_compressed());
-
-        // auto ptr = (uint8_t*)img;
-        // for (auto i = ptr; i < ptr + 64; i++) {
-        //     logD("{:02X}", *i);
-        // }
-
-        // Image rlImg;
-        // rlImg.format = PixelFormat::PIXELFORMAT_COMPRESSED_DXT1_RGBA;
-        // rlImg.width = img.get_width();
-        // rlImg.height = img.get_height();
-        // rlImg.mipmaps = img.get_num_mipmaps();
-        // rlImg.data = (uint8_t*)img;
-
-        // auto rlTex = LoadTextureFromImage(rlImg);
-
-        // img.load()
-
-        // int x, y, comp;
-        // auto buf = stbi_load_from_memory(data.get(), dataLen, &x, &y, &comp, 0);
-        // logD("buf {:X}", (uintptr_t)buf);
-        // // delete buf;
-        // stbi_image_free(buf);
-
-        // stbi_load_from_memory()
-
-        // logD("x");
-
-        // auto img = LoadImageFromMemory(".dds", data.get(), dataLen);
-        // logD("x");
-        // auto tex = LoadTextureFromImage(img);
-        // // logD("x");
-        // m_textures.push_back(tex);
-
-        // dds::Image img;
-        // auto result =
-        // dds::readFile("C:\\Dev\\LEGO\\lotr\\extracted\\LEVELS\\1_FOTR\\1_1PROLOGUE\\1_1PROLOGUEA\\1_1PROLOGUEA_NXG.GSC_tex\\tex11.dds",
-        // &img); logD("img {}x{}", img.width, img.height); img.data
-        
-        // m_textures[i] = LoadTexture("C:\\Dev\\LEGO\\lotr\\extracted\\LEVELS\\1_FOTR\\1_1PROLOGUE\\1_1PROLOGUEA\\1_1PROLOGUEA_NXG.GSC_tex\\tex24_orig.dds");
         auto img = LoadImageFromMemory(".dds", data.get(), dataLen);
         auto tex = LoadTextureFromImage(img);
         SetTextureFilter(tex, TEXTURE_FILTER_BILINEAR);
