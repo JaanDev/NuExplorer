@@ -20,6 +20,7 @@ struct MeshPart {
     unsigned int indexCount;
     unsigned int vertexOffset;
     unsigned int vertexCount;
+    int textureID;
 };
 
 class Scene {
@@ -34,10 +35,13 @@ class Scene {
     void loadVertices(BinReader& reader, MeshPart& part);
     void loadIndices(BinReader& reader, MeshPart& part);
     void genMesh(const MeshPart& part);
-    void readPart(BinReader& reader);
+    void readPart(BinReader& reader, MeshPart& part);
+    void loadTextures(BinReader& reader, int count);
     void cleanup();
 
     std::vector<Model> m_models;
+    // std::unordered_map<unsigned int, Texture> m_textures;
+    std::unordered_map<int, Texture> m_textures;
     std::unordered_map<unsigned int, std::vector<MeshVertex>> m_vertexBuffers;
     std::unordered_map<unsigned int, std::vector<unsigned short>> m_indexBuffers;
     unsigned int m_refCounter;

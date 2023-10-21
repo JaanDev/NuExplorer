@@ -12,10 +12,25 @@ Color intToColor(int col) {
             (unsigned char)(col & 0xFF)};
 }
 
+void rlLogCallback(int logLevel, const char *text, va_list args) {
+    char buffer[1024];
+    vsnprintf(buffer, 1024, text, args);
+    if (logLevel <= LOG_INFO) {
+        logD("[RL] {}", buffer);
+    } else if (logLevel == LOG_WARNING) {
+        logW("[RL] {}", buffer);
+    } else if (logLevel == LOG_ERROR || logLevel == LOG_FATAL) {
+        logE("[RL] {}", buffer);
+    }
+}
+
 int main() {
+    SetTraceLogLevel(LOG_INFO);
+    // SetTraceLogLevel(LOG_WARNING);
+    SetTraceLogCallback(rlLogCallback);
     constexpr auto winSize = Vec2u {1280, 720};
-    // SetConfigFlags(FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT);
-    SetConfigFlags(FLAG_WINDOW_HIGHDPI);
+    SetConfigFlags(FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT);
+    // SetConfigFlags(FLAG_WINDOW_HIGHDPI);
     InitWindow(winSize.x, winSize.y, "NuExplorer");
 
     GuiLoadStyleDark();
@@ -46,7 +61,7 @@ int main() {
         }
 
         if (IsKeyPressed(KEY_O)) {
-            logD("open");
+            logD("Open key pressed");
             const char* filterPatterns[] = {"*.gsc"};
             auto name = tinyfd_openFileDialog("Select a scene file (tested on LLOTR only!)", nullptr, 1, filterPatterns,
                                               "Game scene files (.gsc)", false);

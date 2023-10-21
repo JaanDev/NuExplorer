@@ -68,3 +68,7 @@ size_t BinReader::find(const std::string_view str) {
 size_t BinReader::length() {
     return m_length;
 }
+
+void BinReader::setEndianness(Endianness e) {
+    m_endianness = e;
+}

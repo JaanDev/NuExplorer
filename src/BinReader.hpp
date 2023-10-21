@@ -24,12 +24,19 @@ class BinReader {
         return *this;
     }
 
+    template <typename T>
+    T read() {
+        T val;
+        *this >> val;
+        return val;
+    }
     void read(uint8_t* buffer, size_t len);
     void skip(size_t len);
     void seek(size_t pos);
     size_t pos();
     size_t find(const std::string_view str);
     size_t length();
+    void setEndianness(Endianness e);
 
   private:
     std::ifstream m_stream;

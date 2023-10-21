@@ -9,12 +9,22 @@ file(GLOB SOURCES
     libs/half_float/umHalf.inl
     libs/rlFPCamera/*.cpp
     libs/tinyfiledialogs/*.c
+    libs/nv_dds/*.cpp
 )
 
 add_subdirectory(libs/raylib)
 add_subdirectory(libs/fmt)
+add_subdirectory(libs/dds_image)
 
 add_executable(${PROJECT_NAME} ${SOURCES})
-target_include_directories(${PROJECT_NAME} PRIVATE src libs/half_float libs/rlFPCamera libs/raygui/src libs/raygui/styles libs/tinyfiledialogs)
+target_include_directories(${PROJECT_NAME} PRIVATE
+    src
+    libs/half_float
+    libs/rlFPCamera
+    libs/raygui/src
+    libs/raygui/styles
+    libs/tinyfiledialogs
+    libs
+)
 target_compile_definitions(${PROJECT_NAME} PRIVATE RAYGUI_IMPLEMENTATION)
-target_link_libraries(${PROJECT_NAME} raylib fmt)
+target_link_libraries(${PROJECT_NAME} raylib fmt dds_image)
