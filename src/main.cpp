@@ -12,7 +12,7 @@ Color intToColor(int col) {
             (unsigned char)(col & 0xFF)};
 }
 
-void rlLogCallback(int logLevel, const char *text, va_list args) {
+void rlLogCallback(int logLevel, const char* text, va_list args) {
     char buffer[1024];
     vsnprintf(buffer, 1024, text, args);
     if (logLevel <= LOG_INFO) {
@@ -62,9 +62,9 @@ int main() {
 
         if (IsKeyPressed(KEY_O)) {
             logD("Open key pressed");
-            const char* filterPatterns[] = {"*.gsc"};
-            auto name = tinyfd_openFileDialog("Select a scene file (tested on LLOTR only!)", nullptr, 1, filterPatterns,
-                                              "Game scene files (.gsc)", false);
+            const char* filterPatterns[] = {"*.gsc;*.ghg"};
+            auto name = tinyfd_openFileDialog("Select an object file (tested on LLOTR only!)", nullptr, 1, filterPatterns,
+                                              "Game object files (.gsc, .ghg)", false);
             if (name) {
                 sceneLoaded = true;
                 logD("Selected file {}", name);

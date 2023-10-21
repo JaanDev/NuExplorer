@@ -29,6 +29,7 @@ void Scene::load(const std::string& filename) {
     m_refCounter = 7;
     m_vertexBuffers.clear();
     m_indexBuffers.clear();
+    m_textures.clear();
 
     logD("Loading a scene from {}", filename);
 
@@ -36,6 +37,10 @@ void Scene::load(const std::string& filename) {
 
     // load TXGH
     auto txghOffset = reader.find(std::string_view("HGXT", 4));
+    if (txghOffset == 0) {
+        logE("TXGH: Couldn't find TXGH!");
+        exit(1);
+    }
     logD("TXGH: Found at 0x{:08X}", txghOffset);
     reader.seek(txghOffset);
     reader.skip(4 + 4 + 4);
@@ -68,6 +73,10 @@ void Scene::load(const std::string& filename) {
 
     // loading DISP
     auto dispOffset = reader.find(std::string_view("PSID", 4));
+    if (dispOffset == 0) {
+        logE("DISP: Couldn't find DISP!");
+        exit(1);
+    }
     logD("DISP: Found at 0x{:08X}", dispOffset);
     reader.seek(dispOffset);
     reader.skip(4);
@@ -120,13 +129,17 @@ void Scene::load(const std::string& filename) {
 
     // loading UMTL
     auto utmlOffset = reader.find(std::string_view("LTMU", 4));
+    if (utmlOffset == 0) {
+        logE("UMTL: Couldn't find UMTL!");
+        exit(1);
+    }
     logD("UMTL: Found at 0x{:08X}", utmlOffset);
     reader.seek(utmlOffset);
     reader.skip(4);
     uint32_t umtlVer, mtlCount;
     reader >> umtlVer >> mtlCount >> mtlCount; // its intended
     logD("UTML: Version 0x{:X}, {} materials", umtlVer, mtlCount);
-    NUEX_ASSERT(umtlVer == 0x94 || umtlVer == 0x95)
+    NUEX_ASSERT(umtlVer == 0x94 || umtlVer == 0x95 || umtlVer == 0x96)
 
     std::vector<int> matTextureIDs;
 
@@ -163,10 +176,10 @@ void Scene::load(const std::string& filename) {
         reader.skip(4 * 2 + 1 * 3 + 1 * 2 + 1 + 1 * 21);
         reader.skip(4 * 4);
 
-        auto localTID = reader.read<uint32_t>();
+        auto localTID = reader.read<int32_t>();
         logD("UMTL:     localTID: {}. Should be equal to localTIDs[0]", localTID);
 
-        reader.skip(1 * 2 + 2 * 2 + 1 * 2 + 4 * 6 + 1 * 15 + 4 * 2);
+        reader.skip(1 * 2 + 2 * 2 + 1 * 2 + 4 * 6 + 1 * ((umtlVer >= 0x96) ? 16 : 15) + 4 * 2);
 
         logD("UMTL:     Material ends at 0x{:08X}", reader.pos());
     }
@@ -180,6 +193,10 @@ void Scene::load(const std::string& filename) {
 
     // loading MESH
     auto meshOffset = reader.find(std::string_view("HSEM", 4));
+    if (meshOffset == 0) {
+        logE("MESH: Couldn't find MESH!");
+        exit(1);
+    }
     logD("MESH: Found at 0x{:08X}", meshOffset);
     reader.seek(meshOffset);
     reader.skip(4); // MESH 4cc
@@ -192,7 +209,6 @@ void Scene::load(const std::string& filename) {
     logD("MESH: {} parts", len);
 
     for (auto i = 0u; i < len; i++) {
-        // logD("======= loading part {} =======", i);
         logD("MESH:   * Part {}", i);
         MeshPart part;
         part.textureID = matTextureIDs[meshMaterials[i]];
@@ -229,7 +245,7 @@ void Scene::loadVertices(BinReader& reader, MeshPart& part) {
         reader.skip(4); // flags
         uint32_t count;
         reader >> count;
-        logD("MESH:     New vertex buffer 0x{:X} of length {}", m_refCounter, count);
+        logD("MESH:     New vertex buffer 0x{:X} of length 0x{:X}", m_refCounter, count);
 
         uint32_t nbAttribs;
         reader >> nbAttribs;
@@ -373,7 +389,7 @@ void Scene::loadIndices(BinReader& reader, MeshPart& part) {
         reader.skip(4); // flags
         uint32_t count, size;
         reader >> count >> size;
-        logD("MESH:     New index buffer 0x{:X} of length {}", m_refCounter, count);
+        logD("MESH:     New index buffer 0x{:X} of length 0x{:X}", m_refCounter, count);
         NUEX_ASSERT(size == 2);
 
         std::vector<unsigned short> indices;
@@ -452,8 +468,7 @@ void Scene::genMesh(const MeshPart& part) {
 
     auto model = LoadModelFromMesh(mesh);
     logD("MESH:     Part texture id: {}", part.textureID);
-    // auto x = LoadTexture("C:\\Dev\\MCRewrite\\decomps\\alpha\\c0.30_01c\\decomp\\dirt.png");
-    if (part.textureID != -1 && m_textures.contains(part.textureID)) {
+    if (part.textureID > 2 && m_textures.contains(part.textureID)) {
         logD("MESH:     Applying texture: {}", part.textureID);
         model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = m_textures[part.textureID];
     }
@@ -463,29 +478,62 @@ void Scene::genMesh(const MeshPart& part) {
 }
 
 void Scene::readPart(BinReader& reader, MeshPart& part) {
-    // logD("before loadpart: {:X}", reader.pos());
     loadVertices(reader, part);
-    // logD("after loadpart: {:X}", reader.pos());
 
     uint32_t fastBlendVBSSize;
     reader >> fastBlendVBSSize;
     NUEX_ASSERT(fastBlendVBSSize == 0);
-
-    // logD("before loadindices: {:X}", reader.pos());
     loadIndices(reader, part);
-    // logD("after loadindices: {:X}", reader.pos());
 
     // skip the remaining part
 
     reader.skip(4);
+
     uint32_t skinMtxMapSize;
     reader >> skinMtxMapSize;
     reader.skip(skinMtxMapSize);
+    if (skinMtxMapSize > 0) {
+        m_refCounter++;
+    }
 
     // dynamic parts
     uint32_t dynamicBufferCheck;
     reader >> dynamicBufferCheck;
-    NUEX_ASSERT(dynamicBufferCheck == 0);
+    if (dynamicBufferCheck != 0) {
+        logD("MESH:     Reading relative position list (at 0x{:08X})", reader.pos());
+        reader.skip(4);
+        int num = 1;
+        int num2 = 0;
+        while (reader.read<uint32_t>() != 0) {
+            reader.skip(4);
+            num++;
+        }
+        logD("MESH:     RelPos lists: {}", num);
+        for (auto i = 0u; i < num; i++) {
+            auto num3 = reader.read<int>();
+            logD("MESH:       * RelPos list {} (type {})", i, num3);
+            if (num3 == 0) {
+                reader.skip(5 + 4 + 4);
+                auto num4 = reader.read<int>();
+                logD("MESH:         RelPos size: {}", num4);
+                reader.skip(num4);
+                num2++;
+                auto num5 = reader.read<int>();
+                logD("MESH:         RelPos tupels: {}", num5);
+                reader.skip(4 * num5);
+                if (num5 > 0) {
+                    num2++;
+                }
+                num2++;
+            } else {
+                num2++;
+                num2++;
+                reader.skip(12 * num3 + 21);
+            }
+        }
+
+        m_refCounter += num2;
+    }
 
     reader.skip(4 + 16 + 16 + 4 + 4);
 
@@ -508,6 +556,11 @@ void Scene::readPart(BinReader& reader, MeshPart& part) {
 
 void Scene::loadTextures(BinReader& reader, int count) {
     auto firstTex = reader.find(std::string_view("DDS ", 4));
+    if (firstTex == 0) {
+        logW("TEXTURES: There are no textures in the file!");
+        return;
+    }
+
     logD("TEXTURES: Textures start address found at 0x{:08X}", firstTex);
     reader.seek(firstTex);
 
