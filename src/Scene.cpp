@@ -5,7 +5,6 @@
 #include "BinReader.hpp"
 #include "utils.hpp"
 #include "umHalf.h"
-#include "dds.hpp"
 
 struct MeshAttrib {
     MeshValType valType; // position, normal, etc
@@ -43,18 +42,25 @@ void Scene::load(const std::string& filename) {
     uint32_t texCount;
     reader >> texCount;
     logD("TXGH: {} textures", texCount);
-    m_refCounter += texCount; // i have 0 idea about how the heck this works but it does
     reader.skip(texCount * 4 + 4);
     reader >> texCount;
+    auto goodTexCount = texCount;
     for (auto i = 0u; i < texCount; i++) {
         reader.skip(16);
         uint32_t nameLen;
         reader >> nameLen;
-        char texName[nameLen];
-        reader.read((uint8_t*)texName, nameLen);
-        logD("TXGH:   * Texture {}: {}", i, (char*)texName);
+        if (nameLen > 0) {
+            char texName[nameLen];
+            reader.read((uint8_t*)texName, nameLen);
+            logD("TXGH:   * Texture {}: {}", i, (char*)texName);
+        } else {
+            logD("TXGH:   * Texture {}: <no name>", i);
+            goodTexCount--;
+        }
         reader.skip(2 + 1 + 1);
     }
+    logD("TXGH: Good texture count: {} (of total {})", goodTexCount, texCount);
+    m_refCounter += goodTexCount; // i have 0 idea about how the heck this works but it does
     reader.skip(4);
     uint32_t unk;
     reader >> unk;
@@ -170,7 +176,7 @@ void Scene::load(const std::string& filename) {
     }
 
     // loading texture data
-    loadTextures(reader, texCount);
+    loadTextures(reader, goodTexCount);
 
     // loading MESH
     auto meshOffset = reader.find(std::string_view("HSEM", 4));
@@ -360,14 +366,14 @@ void Scene::loadIndices(BinReader& reader, MeshPart& part) {
 
     if (something >> 3 * 8 == 0xC0) { // reusing an index buffer
         auto id = something ^ 0xC0'00'00'00;
-        logD("MESH:     Reusing index buffer 0x{:x}", id);
+        logD("MESH:     Reusing index buffer 0x{:X}", id);
         part.indexBufferID = id;
         reader.skip(4);
     } else {
         reader.skip(4); // flags
         uint32_t count, size;
         reader >> count >> size;
-        logD("MESH:     New index buffer {:X} of length {}", m_refCounter, count);
+        logD("MESH:     New index buffer 0x{:X} of length {}", m_refCounter, count);
         NUEX_ASSERT(size == 2);
 
         std::vector<unsigned short> indices;
@@ -577,7 +583,7 @@ void Scene::loadTextures(BinReader& reader, int count) {
         } break;
         default:
             logE("TEXTURES:     Unknown texture type 0x{:08X}", type);
-            exit(1);
+            // exit(1);
         }
 
         logD("TEXTURES:     Texture data length: 0x{:08X}", dataLen);
@@ -692,7 +698,7 @@ void Scene::loadTextures(BinReader& reader, int count) {
         // m_textures[i] = LoadTexture("C:\\Dev\\LEGO\\lotr\\extracted\\LEVELS\\1_FOTR\\1_1PROLOGUE\\1_1PROLOGUEA\\1_1PROLOGUEA_NXG.GSC_tex\\tex24_orig.dds");
         auto img = LoadImageFromMemory(".dds", data.get(), dataLen);
         auto tex = LoadTextureFromImage(img);
-        SetTextureFilter(tex, TEXTURE_FILTER_TRILINEAR);
+        SetTextureFilter(tex, TEXTURE_FILTER_BILINEAR);
         m_textures[i] = tex;
     }
 

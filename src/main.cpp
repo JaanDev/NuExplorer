@@ -25,8 +25,8 @@ void rlLogCallback(int logLevel, const char *text, va_list args) {
 }
 
 int main() {
-    SetTraceLogLevel(LOG_INFO);
-    // SetTraceLogLevel(LOG_WARNING);
+    // SetTraceLogLevel(LOG_INFO);
+    SetTraceLogLevel(LOG_WARNING);
     SetTraceLogCallback(rlLogCallback);
     constexpr auto winSize = Vec2u {1280, 720};
     SetConfigFlags(FLAG_WINDOW_HIGHDPI | FLAG_MSAA_4X_HINT);

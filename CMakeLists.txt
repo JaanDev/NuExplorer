@@ -14,7 +14,6 @@ file(GLOB SOURCES
 
 add_subdirectory(libs/raylib)
 add_subdirectory(libs/fmt)
-add_subdirectory(libs/dds_image)
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -27,4 +26,4 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     libs
 )
 target_compile_definitions(${PROJECT_NAME} PRIVATE RAYGUI_IMPLEMENTATION)
-target_link_libraries(${PROJECT_NAME} raylib fmt dds_image)
+target_link_libraries(${PROJECT_NAME} raylib fmt)
